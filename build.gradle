@@ -23,7 +23,7 @@ minecraft {
     mappings channel: 'snapshot', version: '20191130-1.14.3'
     
     runs {		
-		client {
+	client {
             workingDirectory project.file('run')
             property 'forge.logging.console.level', 'info'
             mods {
