@@ -3,21 +3,30 @@ package com.simibubi.create.modules.contraptions.components.deployer;
 import java.util.OptionalInt;
 import java.util.UUID;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import com.mojang.authlib.GameProfile;
+import com.simibubi.create.config.AllConfigs;
+import com.simibubi.create.config.CKinetics;
 import com.simibubi.create.foundation.utility.Lang;
 
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.Pose;
+import net.minecraft.entity.monster.CreeperEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.container.INamedContainerProvider;
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.PacketDirection;
 import net.minecraft.network.play.ServerPlayNetHandler;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.EntityDamageSource;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
@@ -28,6 +37,7 @@ import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingExperienceDropEvent;
+import net.minecraftforge.event.entity.living.LivingSetAttackTargetEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
@@ -35,14 +45,16 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 public class DeployerFakePlayer extends FakePlayer {
 
 	private static final NetworkManager NETWORK_MANAGER = new NetworkManager(PacketDirection.CLIENTBOUND);
-	public static final GameProfile DEPLOYER_PROFILE = new GameProfile(
-			UUID.fromString("9e2faded-cafe-4ec2-c314-dad129ae971d"), "Deployer");
+	public static final GameProfile DEPLOYER_PROFILE =
+		new GameProfile(UUID.fromString("9e2faded-cafe-4ec2-c314-dad129ae971d"), "Deployer");
+	Pair<BlockPos, Float> blockBreakingProgress;
+	ItemStack spawnedItemEffects;
 
 	public DeployerFakePlayer(ServerWorld world) {
 		super(world, DEPLOYER_PROFILE);
 		connection = new FakePlayNetHandler(world.getServer(), this);
 	}
-	
+
 	@Override
 	public OptionalInt openContainer(INamedContainerProvider container) {
 		return OptionalInt.empty();
@@ -73,7 +85,7 @@ public class DeployerFakePlayer extends FakePlayer {
 		if (event.getEntity() instanceof DeployerFakePlayer)
 			event.setNewHeight(0);
 	}
-	
+
 	@SubscribeEvent
 	public static void deployerCollectsDropsFromKilledEntities(LivingDropsEvent event) {
 		if (!(event.getSource() instanceof EntityDamageSource))
@@ -88,10 +100,41 @@ public class DeployerFakePlayer extends FakePlayer {
 		}
 	}
 
+	@Override
+	public void remove(boolean keepData) {
+		if (blockBreakingProgress != null && !world.isRemote)
+			world.sendBlockBreakProgress(getEntityId(), blockBreakingProgress.getKey(), -1);
+		super.remove(keepData);
+	}
+
 	@SubscribeEvent
 	public static void deployerKillsDoNotSpawnXP(LivingExperienceDropEvent event) {
 		if (event.getAttackingPlayer() instanceof DeployerFakePlayer)
 			event.setCanceled(true);
+	}
+
+	@SubscribeEvent
+	public static void entitiesDontRetaliate(LivingSetAttackTargetEvent event) {
+		if (!(event.getTarget() instanceof DeployerFakePlayer))
+			return;
+		LivingEntity entityLiving = event.getEntityLiving();
+		if (!(entityLiving instanceof MobEntity))
+			return;
+		MobEntity mob = (MobEntity) entityLiving;
+
+		CKinetics.DeployerAggroSetting setting = AllConfigs.SERVER.kinetics.ignoreDeployerAttacks.get();
+
+		switch (setting) {
+		case ALL:
+			mob.setAttackTarget(null);
+			break;
+		case CREEPERS:
+			if (mob instanceof CreeperEntity)
+				mob.setAttackTarget(null);
+			break;
+		case NONE:
+		default:
+		}
 	}
 
 	private static class FakePlayNetHandler extends ServerPlayNetHandler {
