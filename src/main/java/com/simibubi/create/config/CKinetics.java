@@ -2,9 +2,11 @@ package com.simibubi.create.config;
 
 public class CKinetics extends ConfigBase {
 
+	public ConfigBool disableStress = b(false, "disableStress", Comments.disableStress);
 	public ConfigInt maxBeltLength = i(20, 5, "maxBeltLength", Comments.maxBeltLength);
 	public ConfigInt crushingDamage = i(4, 0, "crushingDamage", Comments.crushingDamage);
 	public ConfigInt maxMotorSpeed = i(256, 64, "maxMotorSpeed", Comments.rpm, Comments.maxMotorSpeed);
+	public ConfigInt waterWheelSpeed = i(5, 1, "waterWheelSpeed", Comments.rpm, Comments.waterWheelSpeed);
 	public ConfigInt maxRotationSpeed = i(256, 64, "maxRotationSpeed", Comments.rpm, Comments.maxRotationSpeed);
 	public ConfigEnum<DeployerAggroSetting> ignoreDeployerAttacks =
 		e(DeployerAggroSetting.CREEPERS, "ignoreDeployerAttacks", Comments.ignoreDeployerAttacks);
@@ -22,6 +24,7 @@ public class CKinetics extends ConfigBase {
 	public ConfigInt maxChassisForRotation = i(16, 1, "maxChassisForRotation", Comments.maxChassisForRotation);
 	public ConfigInt maxChassisRange = i(16, 1, "maxChassisRange", Comments.maxChassisRange);
 	public ConfigInt maxPistonPoles = i(64, 1, "maxPistonPoles", Comments.maxPistonPoles);
+	public ConfigInt maxRopeLength = i(128, 1, "maxRopeLength", Comments.maxRopeLength);
 
 	public ConfigGroup state = group(0, "stats", Comments.stats);
 	public ConfigFloat mediumSpeed = f(30, 0, 4096, "mediumSpeed", Comments.rpm, Comments.mediumSpeed);
@@ -54,6 +57,7 @@ public class CKinetics extends ConfigBase {
 		static String maxChassisForRotation = "Maximum amount of chassis blocks movable by a Mechanical Bearing.";
 		static String maxChassisRange = "Maximum value of a chassis attachment range.";
 		static String maxPistonPoles = "Maximum amount of extension poles behind a Mechanical Piston.";
+		static String maxRopeLength = "Max length of rope available off a Rope Pulley.";
 		static String stats = "Configure speed/capacity levels for requirements and indicators.";
 		static String rpm = "[in Revolutions per Minute]";
 		static String su = "[in Stress Units]";
@@ -65,6 +69,8 @@ public class CKinetics extends ConfigBase {
 		static String highCapacity = "Minimum added Capacity by sources to be considered 'high'";
 		static String stress = "Fine tune the kinetic stats of individual components";
 		static String ignoreDeployerAttacks = "Select what mobs should ignore Deployers when attacked by them.";
+		static String waterWheelSpeed = "Rotation speed gained by a water wheel for each side with running water. (halved if not against blades)";
+		static String disableStress = "Disable the Stress mechanic altogether.";
 	}
 
 	public static enum DeployerAggroSetting {

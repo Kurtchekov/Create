@@ -1,11 +1,18 @@
 package com.simibubi.create.modules.contraptions.components.contraptions.bearing;
 
+import java.util.List;
+
 import com.simibubi.create.AllTileEntities;
+import com.simibubi.create.foundation.behaviour.ValueBoxTransform;
+import com.simibubi.create.foundation.behaviour.base.TileEntityBehaviour;
+import com.simibubi.create.foundation.behaviour.scrollvalue.ScrollOptionBehaviour;
+import com.simibubi.create.foundation.utility.AngleHelper;
+import com.simibubi.create.foundation.utility.Lang;
 import com.simibubi.create.foundation.utility.ServerSpeedProvider;
 import com.simibubi.create.modules.contraptions.base.GeneratingKineticTileEntity;
 import com.simibubi.create.modules.contraptions.components.contraptions.Contraption;
 import com.simibubi.create.modules.contraptions.components.contraptions.ContraptionEntity;
-import com.simibubi.create.modules.contraptions.components.contraptions.IControlContraption;
+import com.simibubi.create.modules.contraptions.components.contraptions.DirectionalExtenderScrollOptionSlot;
 
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.state.properties.BlockStateProperties;
@@ -16,20 +23,29 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
-public class MechanicalBearingTileEntity extends GeneratingKineticTileEntity implements IControlContraption {
+public class MechanicalBearingTileEntity extends GeneratingKineticTileEntity implements IBearingTileEntity {
 
+	protected boolean isWindmill;
 	protected ContraptionEntity movedContraption;
 	protected float angle;
 	protected boolean running;
 	protected boolean assembleNextTick;
-	protected boolean isWindmill;
-
 	protected float clientAngleDiff;
+	protected ScrollOptionBehaviour<RotationMode> movementMode;
 
 	public MechanicalBearingTileEntity() {
 		super(AllTileEntities.MECHANICAL_BEARING.type);
 		isWindmill = false;
 		setLazyTickRate(3);
+	}
+
+	@Override
+	public void addBehaviours(List<TileEntityBehaviour> behaviours) {
+		super.addBehaviours(behaviours);
+		movementMode = new ScrollOptionBehaviour<>(RotationMode.class, Lang.translate("contraptions.movement_mode"),
+				this, getMovementModeSlot());
+		movementMode.requiresWrench();
+		behaviours.add(movementMode);
 	}
 
 	@Override
@@ -99,14 +115,16 @@ public class MechanicalBearingTileEntity extends GeneratingKineticTileEntity imp
 	public void readClientUpdate(CompoundNBT tag) {
 		float angleBefore = angle;
 		super.readClientUpdate(tag);
-		clientAngleDiff = angle - angleBefore;
-		if (Math.abs(clientAngleDiff) > 20)
-			clientAngleDiff = 0;
-		angle = angleBefore;
+		if (running) {
+			clientAngleDiff = AngleHelper.getShortestAngleDiff(angleBefore, angle);
+			angle = angleBefore;
+		} else
+			movedContraption = null;
 	}
 
+	@Override
 	public float getInterpolatedAngle(float partialTicks) {
-		if (movedContraption != null && movedContraption.isStalled())
+		if (movedContraption == null || movedContraption.isStalled())
 			partialTicks = 0;
 		return MathHelper.lerp(partialTicks, angle, angle + getAngularSpeed());
 	}
@@ -135,8 +153,10 @@ public class MechanicalBearingTileEntity extends GeneratingKineticTileEntity imp
 			return;
 		if (isWindmill && contraption.getSailBlocks() == 0)
 			return;
+		if (contraption.blocks.isEmpty())
+			return;
 		contraption.removeBlocksFromWorld(world, BlockPos.ZERO);
-		movedContraption = new ContraptionEntity(world, contraption, 0).controlledBy(this);
+		movedContraption = ContraptionEntity.createStationary(world, contraption).controlledBy(this);
 		BlockPos anchor = pos.offset(direction);
 		movedContraption.setPosition(anchor.getX(), anchor.getY(), anchor.getZ());
 		world.addEntity(movedContraption);
@@ -152,8 +172,9 @@ public class MechanicalBearingTileEntity extends GeneratingKineticTileEntity imp
 	public void disassembleConstruct() {
 		if (!running)
 			return;
+		if (movedContraption != null)
+			movedContraption.disassemble();
 
-		movedContraption.disassemble();
 		movedContraption = null;
 		running = false;
 		angle = 0;
@@ -174,7 +195,8 @@ public class MechanicalBearingTileEntity extends GeneratingKineticTileEntity imp
 		if (!world.isRemote && assembleNextTick) {
 			assembleNextTick = false;
 			if (running) {
-				boolean canDisassemble = Math.abs(angle) < 45 || Math.abs(angle) > 7 * 45;
+				boolean canDisassemble = movementMode.get() == RotationMode.ROTATE_PLACE
+						|| (isNearInitialAngle() && movementMode.get() == RotationMode.ROTATE_PLACE_RETURNED);
 				if (speed == 0 && (canDisassemble || movedContraption == null
 						|| movedContraption.getContraption().blocks.isEmpty())) {
 					if (movedContraption != null)
@@ -202,6 +224,10 @@ public class MechanicalBearingTileEntity extends GeneratingKineticTileEntity imp
 		applyRotation();
 	}
 
+	public boolean isNearInitialAngle() {
+		return Math.abs(angle) < 45 || Math.abs(angle) > 7 * 45;
+	}
+
 	@Override
 	public void lazyTick() {
 		super.lazyTick();
@@ -209,7 +235,7 @@ public class MechanicalBearingTileEntity extends GeneratingKineticTileEntity imp
 			sendData();
 	}
 
-	private void applyRotation() {
+	protected void applyRotation() {
 		if (movedContraption != null) {
 			Axis axis = getBlockState().get(BlockStateProperties.FACING).getAxis();
 			Direction direction = Direction.getFacingFromAxis(AxisDirection.POSITIVE, axis);
@@ -239,6 +265,14 @@ public class MechanicalBearingTileEntity extends GeneratingKineticTileEntity imp
 	@Override
 	public boolean isValid() {
 		return !isRemoved();
+	}
+
+	protected ValueBoxTransform getMovementModeSlot() {
+		return new DirectionalExtenderScrollOptionSlot((state, d) -> {
+			Axis axis = d.getAxis();
+			Axis bearingAxis = state.get(MechanicalBearingBlock.FACING).getAxis();
+			return bearingAxis != axis;
+		});
 	}
 
 }

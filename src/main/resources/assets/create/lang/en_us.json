@@ -26,6 +26,7 @@
 	"item.create.propeller": "Propeller",
 	"item.create.whisk": "Whisk",
 	"item.create.brass_hand": "Hand",
+	"item.create.slot_cover": "Crafter Slot Cover",
 	"item.create.flour": "Wheat Flour",
 	"item.create.dough": "Dough",
 	"item.create.wrench": "Wrench",
@@ -72,6 +73,8 @@
 	"item.create.rose_quartz_sword": "Gilded Quartz Blade",
 
 	"block.create.copper_ore": "Copper Ore",
+	"block.create.copper_block": "Copper Block",
+	"block.create.copper_shingles": "Copper Shingles",
 	"block.create.zinc_ore": "Zinc Ore",
 	
 	"block.create.andesite_casing": "Andesite Casing",
@@ -117,6 +120,10 @@
 	"block.create.mechanical_piston_head": "Mechanical Piston Head",
 	"block.create.piston_pole": "Piston Extension Pole",
 	"block.create.mechanical_bearing": "Mechanical Bearing",
+	"block.create.clockwork_bearing": "Clockwork Bearing",
+	"block.create.rope_pulley": "Rope Pulley",
+	"block.create.rope": "Rope",
+	"block.create.pulley_magnet": "Pulley Magnet",
 	"block.create.translation_chassis": "Linear Chassis",
 	"block.create.rotation_chassis": "Radial Chassis",
 
@@ -306,6 +313,7 @@
 
 	"create.gui.scrollInput.defaultTitle": "Choose an Option:",
 	"create.gui.scrollInput.scrollToModify": "Scroll to Modify",
+	"create.gui.scrollInput.scrollToAdjustAmount": "Scroll to Adjust Amount",
 	"create.gui.scrollInput.scrollToSelect": "Scroll to Select",
 	"create.gui.scrollInput.shiftScrollsFaster": "Shift to Scroll faster",
 
@@ -350,6 +358,14 @@
 	"create.blockzapper.leftClickToSet": "Left-Click a Block to set Material",
 	"create.blockzapper.empty": "Out of Blocks!",
 
+	"create.contraptions.movement_mode": "Movement Mode",
+	"create.contraptions.movement_mode.move_place": "Always Place when Stopped",
+	"create.contraptions.movement_mode.move_place_returned": "Only Place in Starting Position",
+	"create.contraptions.movement_mode.move_never_place": "Only Place when Anchor Destroyed",
+	"create.contraptions.movement_mode.rotate_place": "Always Place when Stopped",
+	"create.contraptions.movement_mode.rotate_place_returned": "Only Place near Initial Angle",
+	"create.contraptions.movement_mode.rotate_never_place": "Only Place when Anchor Destroyed",
+	
 	"create.logistics.filter": "Filter",
 	"create.logistics.firstFrequency": "Freq. #1",
 	"create.logistics.secondFrequency": "Freq. #2",
@@ -607,6 +623,16 @@
 	"advancement.create:refined_radiance_secret.desc": "Find the alternative way to make Refined Radiance",
 	"advancement.create:speed_secret": "Hella fast",
 	"advancement.create:speed_secret.desc": "Watch a Speedometer reach exactly 666 speed",
+
+	"create.subtitle.schematicannon_launch_block": "Schematicannon shoots",
+	"create.subtitle.schematicannon_finish": "Schematicannon finishes",
+	"create.subtitle.slime_added": "Slime squishes",
+	"create.subtitle.mechanical_press_activation": "Mechanical Press activates",
+	"create.subtitle.mechanical_press_item_break": "Metal clanks",
+	"create.subtitle.blockzapper_place": "Blocks zap into place",
+	"create.subtitle.blockzapper_confirm": "Affirmative Ding",
+	"create.subtitle.blockzapper_deny": "Declining Boop",
+	"create.subtitle.block_funnel_eat": "Funnel eats",
 
 	"_comment": "-------------------------]  ITEM DESCRIPTIONS  [------------------------------------------------",
 
@@ -990,6 +1016,9 @@
 	
 	"item.create.shadow_steel.tooltip": "SHADOW STEEL",
 	"item.create.shadow_steel.tooltip.summary": "A Chromatic material forged _in_ _the_ _void._",
+	
+	"item.create.slot_cover.tooltip": "SLOT COVER",
+	"item.create.slot_cover.tooltip.summary": "Used to mark a _Mechanical_ _Crafter_ as an empty slot in a recipe. Crafters do not necessarily have to form a full square grid, this cover find its use when there are recipes where _ingredients_ _are_ _diagonal_ to each other.",
 	
 	"item.create.logistical_controller_calculation.tooltip": "WIP",
 	"item.create.logistical_controller_request.tooltip": "WIP",

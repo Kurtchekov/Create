@@ -22,13 +22,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.config.AllConfigs;
 import com.simibubi.create.foundation.utility.NBTHelper;
-import com.simibubi.create.modules.contraptions.components.contraptions.bearing.BearingContraption;
 import com.simibubi.create.modules.contraptions.components.contraptions.chassis.AbstractChassisBlock;
 import com.simibubi.create.modules.contraptions.components.contraptions.chassis.ChassisTileEntity;
 import com.simibubi.create.modules.contraptions.components.contraptions.chassis.LinearChassisBlock;
 import com.simibubi.create.modules.contraptions.components.contraptions.chassis.RadialChassisBlock;
-import com.simibubi.create.modules.contraptions.components.contraptions.mounted.MountedContraption;
-import com.simibubi.create.modules.contraptions.components.contraptions.piston.PistonContraption;
 import com.simibubi.create.modules.contraptions.components.saw.SawBlock;
 
 import net.minecraft.block.Block;
@@ -43,6 +40,7 @@ import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.Direction.AxisDirection;
@@ -55,7 +53,7 @@ import net.minecraft.world.gen.feature.template.Template.BlockInfo;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.wrapper.CombinedInvWrapper;
 
-public class Contraption {
+public abstract class Contraption {
 
 	public Map<BlockPos, BlockInfo> blocks;
 	public Map<BlockPos, MountedStorage> storage;
@@ -69,10 +67,13 @@ public class Contraption {
 	protected Direction cachedColliderDirection;
 	protected BlockPos anchor;
 
+	List<BlockPos> renderOrder;
+
 	public Contraption() {
 		blocks = new HashMap<>();
 		storage = new HashMap<>();
 		actors = new ArrayList<>();
+		renderOrder = new ArrayList<>();
 	}
 
 	private static List<BlockInfo> getChassisClusterAt(World world, BlockPos pos) {
@@ -168,7 +169,7 @@ public class Contraption {
 		return true;
 	}
 
-	private boolean moveBlock(World world, BlockPos pos, Direction direction, List<BlockPos> frontier,
+	protected boolean moveBlock(World world, BlockPos pos, Direction direction, List<BlockPos> frontier,
 			Set<BlockPos> visited) {
 		visited.add(pos);
 		frontier.remove(pos);
@@ -435,6 +436,10 @@ public class Contraption {
 			return true;
 		if (blockState.getBlock() instanceof ShulkerBoxBlock)
 			return false;
+		if (blockState.getBlockHardness(world, pos) == -1)
+			return false;
+		if (blockState.getBlock() == Blocks.OBSIDIAN)
+			return false;
 		return blockState.getPushReaction() != PushReaction.BLOCK;
 	}
 
@@ -477,25 +482,28 @@ public class Contraption {
 
 	public static Contraption fromNBT(World world, CompoundNBT nbt) {
 		String type = nbt.getString("Type");
-		Contraption contraption = new Contraption();
-		if (type.equals("Piston"))
-			contraption = new PistonContraption();
-		if (type.equals("Mounted"))
-			contraption = new MountedContraption();
-		if (type.equals("Bearing"))
-			contraption = new BearingContraption();
+		Contraption contraption = AllContraptionTypes.fromType(type);
 		contraption.readNBT(world, nbt);
 		return contraption;
 	}
 
 	public void readNBT(World world, CompoundNBT nbt) {
 		blocks.clear();
+		renderOrder.clear();
+
 		nbt.getList("Blocks", 10).forEach(c -> {
 			CompoundNBT comp = (CompoundNBT) c;
 			BlockInfo info = new BlockInfo(NBTUtil.readBlockPos(comp.getCompound("Pos")),
 					NBTUtil.readBlockState(comp.getCompound("Block")),
 					comp.contains("Data") ? comp.getCompound("Data") : null);
 			blocks.put(info.pos, info);
+			if (world.isRemote) {
+				BlockRenderLayer renderLayer = info.state.getBlock().getRenderLayer();
+				if (renderLayer == BlockRenderLayer.TRANSLUCENT)
+					renderOrder.add(info.pos);
+				else
+					renderOrder.add(0, info.pos);
+			}
 		});
 
 		actors.clear();
@@ -525,14 +533,7 @@ public class Contraption {
 
 	public CompoundNBT writeNBT() {
 		CompoundNBT nbt = new CompoundNBT();
-
-		if (this instanceof PistonContraption)
-			nbt.putString("Type", "Piston");
-		if (this instanceof MountedContraption)
-			nbt.putString("Type", "Mounted");
-		if (this instanceof BearingContraption)
-			nbt.putString("Type", "Bearing");
-
+		nbt.putString("Type", getType().id);
 		ListNBT blocksNBT = new ListNBT();
 		for (BlockInfo block : this.blocks.values()) {
 			CompoundNBT c = new CompoundNBT();
@@ -642,7 +643,7 @@ public class Contraption {
 		}
 	}
 
-	public AxisAlignedBB getCollisionBoxFront() {
+	public AxisAlignedBB getCollisionBox() {
 		return constructCollisionBox;
 	}
 
@@ -675,5 +676,7 @@ public class Contraption {
 			return null;
 		return ((IPortableBlock) block).getMovementBehaviour();
 	}
+
+	protected abstract AllContraptionTypes getType();
 
 }
