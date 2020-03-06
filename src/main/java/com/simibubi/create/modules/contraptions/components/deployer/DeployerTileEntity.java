@@ -13,7 +13,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.simibubi.create.AllBlockPartials;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllTileEntities;
-import com.simibubi.create.foundation.advancement.AllCriterionTriggers;
+import com.simibubi.create.foundation.advancement.AllTriggers;
 import com.simibubi.create.foundation.behaviour.base.TileEntityBehaviour;
 import com.simibubi.create.foundation.behaviour.filtering.FilteringBehaviour;
 import com.simibubi.create.foundation.behaviour.inventory.ExtractingBehaviour;
@@ -247,7 +247,7 @@ public class DeployerTileEntity extends KineticTileEntity {
 		// award nearby players
 		List<ServerPlayerEntity> players =
 			world.getEntitiesWithinAABB(ServerPlayerEntity.class, new AxisAlignedBB(pos).grow(9));
-		players.forEach(AllCriterionTriggers.DEPLOYER_BOOP::trigger);
+		players.forEach(AllTriggers.DEPLOYER_BOOP::trigger);
 	}
 
 	protected void activate() {
@@ -259,7 +259,8 @@ public class DeployerTileEntity extends KineticTileEntity {
 		player.rotationPitch = direction == Direction.UP ? -90 : direction == Direction.DOWN ? 90 : 0;
 
 		DeployerHandler.activate(player, center, clickedPos, movementVector, mode);
-		heldItem = player.getHeldItemMainhand();
+		if (player != null)
+			heldItem = player.getHeldItemMainhand();
 	}
 
 	protected void returnAndDeposit() {

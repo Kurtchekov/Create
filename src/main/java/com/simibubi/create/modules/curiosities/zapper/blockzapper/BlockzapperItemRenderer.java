@@ -1,32 +1,30 @@
-package com.simibubi.create.modules.curiosities.blockzapper;
+package com.simibubi.create.modules.curiosities.zapper.blockzapper;
 
-import static com.simibubi.create.modules.curiosities.blockzapper.BlockzapperItem.Components.Accelerator;
-import static com.simibubi.create.modules.curiosities.blockzapper.BlockzapperItem.Components.Amplifier;
-import static com.simibubi.create.modules.curiosities.blockzapper.BlockzapperItem.Components.Body;
-import static com.simibubi.create.modules.curiosities.blockzapper.BlockzapperItem.Components.Retriever;
-import static com.simibubi.create.modules.curiosities.blockzapper.BlockzapperItem.Components.Scope;
+import static com.simibubi.create.modules.curiosities.zapper.blockzapper.BlockzapperItem.Components.Accelerator;
+import static com.simibubi.create.modules.curiosities.zapper.blockzapper.BlockzapperItem.Components.Amplifier;
+import static com.simibubi.create.modules.curiosities.zapper.blockzapper.BlockzapperItem.Components.Body;
+import static com.simibubi.create.modules.curiosities.zapper.blockzapper.BlockzapperItem.Components.Retriever;
+import static com.simibubi.create.modules.curiosities.zapper.blockzapper.BlockzapperItem.Components.Scope;
 
 import com.mojang.blaze3d.platform.GLX;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.simibubi.create.foundation.utility.AnimationTickHolder;
-import com.simibubi.create.modules.curiosities.blockzapper.BlockzapperItem.ComponentTier;
-import com.simibubi.create.modules.curiosities.blockzapper.BlockzapperItem.Components;
+import com.simibubi.create.modules.curiosities.zapper.ZapperRenderHandler;
+import com.simibubi.create.modules.curiosities.zapper.ZapperItemRenderer;
+import com.simibubi.create.modules.curiosities.zapper.blockzapper.BlockzapperItem.ComponentTier;
+import com.simibubi.create.modules.curiosities.zapper.blockzapper.BlockzapperItem.Components;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.FourWayBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms.TransformType;
-import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.HandSide;
 import net.minecraft.util.math.MathHelper;
 
 @SuppressWarnings("deprecation")
-public class BlockzapperItemRenderer extends ItemStackTileEntityRenderer {
+public class BlockzapperItemRenderer extends ZapperItemRenderer {
 
 	@Override
 	public void renderByItem(ItemStack stack) {
@@ -56,10 +54,10 @@ public class BlockzapperItemRenderer extends ItemStackTileEntityRenderer {
 		boolean leftHanded = player.getPrimaryHand() == HandSide.LEFT;
 		boolean mainHand = player.getHeldItemMainhand() == stack;
 		boolean offHand = player.getHeldItemOffhand() == stack;
-		float last = mainHand ^ leftHanded ? BlockzapperHandler.lastRightHandAnimation
-				: BlockzapperHandler.lastLeftHandAnimation;
-		float current = mainHand ^ leftHanded ? BlockzapperHandler.rightHandAnimation
-				: BlockzapperHandler.leftHandAnimation;
+		float last = mainHand ^ leftHanded ? ZapperRenderHandler.lastRightHandAnimation
+				: ZapperRenderHandler.lastLeftHandAnimation;
+		float current = mainHand ^ leftHanded ? ZapperRenderHandler.rightHandAnimation
+				: ZapperRenderHandler.leftHandAnimation;
 		float animation = MathHelper.clamp(MathHelper.lerp(pt, last, current) * 5, 0, 1);
 
 		// Core glows
@@ -87,22 +85,6 @@ public class BlockzapperItemRenderer extends ItemStackTileEntityRenderer {
 		GlStateManager.translatef(0, -offset, 0);
 		renderComponent(stack, mainModel, Accelerator, itemRenderer);
 
-		GlStateManager.popMatrix();
-	}
-
-	public void renderBlockUsed(ItemStack stack, ItemRenderer itemRenderer) {
-		BlockState state = NBTUtil.readBlockState(stack.getTag().getCompound("BlockUsed"));
-
-		GlStateManager.pushMatrix();
-		GlStateManager.translatef(-0.3F, -0.45F, -0.0F);
-		GlStateManager.scalef(0.25F, 0.25F, 0.25F);
-		IBakedModel modelForState = Minecraft.getInstance().getBlockRendererDispatcher().getModelForState(state);
-
-		if (state.getBlock() instanceof FourWayBlock)
-			modelForState = Minecraft.getInstance().getItemRenderer()
-					.getModelWithOverrides(new ItemStack(state.getBlock()));
-
-		itemRenderer.renderItem(new ItemStack(state.getBlock()), modelForState);
 		GlStateManager.popMatrix();
 	}
 
